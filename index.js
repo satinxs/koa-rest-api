@@ -1,28 +1,68 @@
-const fs = require('fs');
-const path = require('path');
-const { promisify } = require('util');
-
-const Router = require('koa-router'),
+const
+    path = require('path'),
+    fs = require('fs'),
+    { promisify } = require('util'),
+    Router = require('koa-router'),
     Koa = require('koa'),
-    Controller = require('./Controller');
+    mount = require('koa-mount'),
+    Controller = require('./Controller'),
+    ManagerController = require('./ManagerController');
 
-function create(controllersRoute) {
-    let api = new Koa(),
-        router = new Router();
+function checkConfiguration(config) {
+    config = config || {};
 
-    let directory = await promisify(fs.readdir)(controllersRoute);
+    config.controllersRoute = config.controllersRoute || "./controllers";
 
-    for (let file of directory) {
-        let controllerPath = path.join(controllersRoute + file),
-            controller = new (require(controllerPath))(router);
+    config.appName = config.appName || "App";
 
-        controller.initialize();
-    }
+    config.apiRoute = config.apiRoute || "/api";
 
-    api.use(router.routes());
-    api.use(router.allowedMethods());
+    return config;
 }
 
-create.Controller = Controller;
+function handleError() {
+    return async (ctx, next) => {
+        try {
+            await next();
+        } catch (err) {
+            ctx.status = err.statusCode || err.status || 500;
+            ctx.body = {
+                code: err.code || ctx.status,
+                message: err.message
+            };
+        }
+    }
+}
 
-module.exports = create;
+function create(app, config) {
+    const log = require('debug')(config.appName + ':api');
+
+    config = checkConfiguration(config);
+
+    try {
+        let api = new Koa(),
+            router = new Router();
+
+        let directory = await promisify(fs.readdir)(config.controllersRoute);
+
+        for (let file of directory) {
+            let controllerPath = path.join(controllersRoute + file),
+                controller = new (require(controllerPath))(router);
+
+            controller.log = require('debug')(config.appName + ":controller");
+
+            controller.initialize();
+        }
+
+        app.use(handleError());
+        api.use(router.routes());
+        api.use(router.allowedMethods());
+        app.use(mount(config.apiRoute, api));
+
+        log('Initialized API');
+    } catch (error) {
+        log(error);
+    }
+}
+
+module.exports = { create, Controller, ManagerController };
