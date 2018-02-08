@@ -3,7 +3,9 @@ const
     compose = require('koa-compose');
 
 class Controller {
-    constructor(name, router) {
+    constructor(name, router, log) {
+        this.log = log;
+
         this.log('Initializing ' + this.Name + ' controller');
 
         this.Name = name;

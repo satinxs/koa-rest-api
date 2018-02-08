@@ -34,7 +34,7 @@ function handleError() {
     }
 }
 
-function create(app, config) {
+async function create(app, config) {
     const log = require('debug')(config.appName + ':api');
 
     config = checkConfiguration(config);
@@ -46,10 +46,8 @@ function create(app, config) {
         let directory = await promisify(fs.readdir)(config.controllersRoute);
 
         for (let file of directory) {
-            let controllerPath = path.join(controllersRoute + file),
-                controller = new (require(controllerPath))(router);
-
-            controller.log = require('debug')(config.appName + ":controller");
+            let controllerPath = path.join(config.controllersRoute, file),
+                controller = new (require(controllerPath))(router, log);
 
             controller.initialize();
         }

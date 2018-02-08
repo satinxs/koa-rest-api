@@ -4,8 +4,8 @@ const
     Controller = require('./Controller');
 
 class ManagerController extends Controller {
-    constructor(model, router) {
-        super(model.collection.name, router);
+    constructor(model, router, log) {
+        super(model.collection.name, router, log);
 
         // this.Name = model.collection.name;
         this.Model = model;
