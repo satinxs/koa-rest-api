@@ -7,9 +7,7 @@ class ManagerController extends Controller {
     constructor(model, router, log) {
         super(model.collection.name, router, log);
 
-        // this.Name = model.collection.name;
         this.Model = model;
-        // this.Router = router;
 
         this.allowCreate = true;
         this.allowDelete = true;
@@ -46,10 +44,12 @@ class ManagerController extends Controller {
     async readById(ctx, id) {
         try {
 
-            let result = await this.Model.findById(id);
+            let result = await this.Model.findById(id).lean();
 
             if (result == null)
                 ctx.throw(404);
+
+            return result;
 
         } catch (error) {
             ctx.throw(error);
@@ -58,7 +58,7 @@ class ManagerController extends Controller {
 
     async readAll(ctx) {
         try {
-            return await this.Model.find({});
+            return await this.Model.find({}).lean();
         } catch (error) {
             ctx.throw(error);
         }
